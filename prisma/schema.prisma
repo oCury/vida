@@ -76,10 +76,14 @@ model Categoria {
 }
 
 model RegraCategoria {
-  id          String    @id @default(cuid())
-  padrao      String // trecho buscado na descrição, maiúsculas
-  categoriaId String
-  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+  id          String     @id @default(cuid())
+  padrao      String // trecho buscado na descrição, comparado em maiúsculas
+  categoriaId String? // nulo quando a regra é de ignorar
+  categoria   Categoria? @relation(fields: [categoriaId], references: [id])
+  ignorar     Boolean    @default(false)
+  criadaEm    DateTime   @default(now())
+
+  @@index([criadaEm])
 }
 
 model Orcamento {

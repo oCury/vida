@@ -15,5 +15,15 @@ export async function middleware(req: NextRequest) {
  * token, porque o app Atalhos do iPhone e o cron da Vercel não fazem login.
  */
 export const config = {
-  matcher: ['/dia/:path*', '/dinheiro/:path*', '/habitos/:path*'],
+  // Rotas sem sufixo listadas explicitamente: confiar que `:path*` também
+  // casa `/dinheiro` deixaria extrato bancário acessível sem login se não
+  // casasse. O custo de ser explícito aqui é zero.
+  matcher: [
+    '/dia',
+    '/dia/:path*',
+    '/dinheiro',
+    '/dinheiro/:path*',
+    '/habitos',
+    '/habitos/:path*',
+  ],
 }

@@ -47,6 +47,7 @@ model Conta {
   tipo            TipoConta
   saldo           Decimal?    @db.Decimal(14, 2) // null = desconhecido, nunca 0
   limite          Decimal?    @db.Decimal(14, 2)
+  ehReserva       Boolean     @default(false) // marcada uma vez pelo usuário
   transacoes      Transacao[]
 }
 
@@ -135,4 +136,13 @@ model SyncLog {
   status      String // OK | ERRO
   erro        String?
   novas       Int      @default(0)
+}
+
+/** Endpoint de Web Push de um dispositivo. Um usuário, poucos aparelhos. */
+model Inscricao {
+  id       String   @id @default(cuid())
+  endpoint String   @unique
+  p256dh   String
+  auth     String
+  criadaEm DateTime @default(now())
 }

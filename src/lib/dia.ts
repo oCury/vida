@@ -1,13 +1,33 @@
 export const TZ = 'America/Sao_Paulo'
 
-const FORMATO_DIA = /^\d{4}-\d{2}-\d{2}$/
+const FORMATO_DIA = /^(\d{4})-(\d{2})-(\d{2})$/
+
+/**
+ * Valida que a string é um dia de calendário REAL, não só bem formatado.
+ * A regex sozinha não basta: o parser ISO do V8 aceita "2026-02-30" e rola
+ * silenciosamente para 2026-03-02, corrompendo o eixo da correlação sem aviso.
+ */
+function validarDia(dia: string): void {
+  const m = FORMATO_DIA.exec(dia)
+  if (!m) throw new Error(`dia inválido: ${dia}`)
+  const ano = Number(m[1])
+  const mes = Number(m[2])
+  const diaDoMes = Number(m[3])
+  const data = new Date(Date.UTC(ano, mes - 1, diaDoMes))
+  const real =
+    data.getUTCFullYear() === ano &&
+    data.getUTCMonth() === mes - 1 &&
+    data.getUTCDate() === diaDoMes
+  if (!real) throw new Error(`dia inválido: ${dia}`)
+}
 
 /** Dia-calendário em America/Sao_Paulo, no formato YYYY-MM-DD. */
 export function diaLocal(valor: Date | string): string {
   if (typeof valor === 'string') {
-    if (!FORMATO_DIA.test(valor)) throw new Error(`dia inválido: ${valor}`)
+    validarDia(valor)
     return valor
   }
+  if (Number.isNaN(valor.getTime())) throw new Error('dia inválido: Date inválido')
   // en-CA formata como YYYY-MM-DD
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: TZ,
@@ -23,7 +43,7 @@ export function diaLocal(valor: Date | string): string {
  * dia local colida na constraint única independentemente da hora do envio.
  */
 export function inicioDoDiaUTC(dia: string): Date {
-  if (!FORMATO_DIA.test(dia)) throw new Error(`dia inválido: ${dia}`)
+  validarDia(dia)
   // Descobre o offset de Brasília naquela data (o Brasil pode voltar a ter horário de verão).
   const meioDiaUTC = new Date(`${dia}T12:00:00Z`)
   const offsetMin = offsetMinutos(meioDiaUTC)

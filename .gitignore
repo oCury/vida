@@ -1,0 +1,31 @@
+# dependências
+node_modules/
+
+# build
+.next/
+out/
+dist/
+.vercel/
+
+# ambiente — NUNCA commitar
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# banco local
+prisma/*.db
+prisma/*.db-journal
+
+# testes
+coverage/
+playwright-report/
+test-results/
+
+# sistema
+.DS_Store
+*.log
+npm-debug.log*

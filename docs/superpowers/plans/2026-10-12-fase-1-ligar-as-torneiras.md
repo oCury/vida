@@ -445,10 +445,17 @@ saldo nullable porque ausência de dado difere de saldo zero."
 ---
 
 ### Task 3: Autenticação de usuário único
+> ⚠️ **Correção importante descoberta na execução:** o `middleware.ts` roda no **Edge Runtime**,
+> onde `node:crypto` NÃO existe. Por isso a autenticação é dividida em DOIS módulos, e juntá-los
+> faz o `next build` falhar com `UnhandledSchemeError: Reading from "node:crypto" is not handled`:
+>
+> - `src/lib/sessao.ts` — só `jose` (assinar/verificar JWT). É o que o middleware importa.
+> - `src/lib/senha.ts` — `node:crypto` (scrypt). Nunca pode ser importado pelo middleware.
+
 
 **Arquivos:**
-- Criar: `src/lib/auth.ts`
-- Testar: `src/lib/auth.test.ts`
+- Criar: `src/lib/sessao.ts` (Edge-safe), `src/lib/senha.ts` (node:crypto)
+- Testar: `src/lib/sessao.test.ts`, `src/lib/senha.test.ts`
 
 - [ ] **Passo 1: Escrever o teste que falha**
 

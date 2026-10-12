@@ -116,7 +116,9 @@ tocar o atalho duas vezes. Sem isso o dado apodrece em silêncio.
 
 ### Autenticação
 
-Usuário único. Painel: senha única + cookie `httpOnly` de 90 dias. Endpoints de ingestão:
+Usuário único. Painel: senha única + cookie `httpOnly` de 90 dias. A sessão (JWT via `jose`)
+e o hash de senha (`scrypt`) ficam em módulos **separados**: o middleware roda no Edge
+Runtime, onde `node:crypto` não existe, e juntá-los quebra o build. Endpoints de ingestão:
 **bearer token estático** em variável de ambiente, porque o Atalhos não faz login. Token no
 header, nunca na query string — URL de Atalho vaza em backup e em captura de tela. Token
 rotacionável por env var.

@@ -1,6 +1,5 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
-import { SignJWT, jwtVerify } from 'jose'
 
 const scrypt = promisify(scryptCb) as (
   senha: string,
@@ -8,20 +7,15 @@ const scrypt = promisify(scryptCb) as (
   tamanho: number,
 ) => Promise<Buffer>
 
-export const COOKIE_SESSAO = 'vida_sessao'
-export const DIAS_DE_SESSAO = 90
-
 const TAMANHO_SAL = 16
 const TAMANHO_HASH = 64
-const MINIMO_SEGREDO = 32
 
-function segredo(): Uint8Array {
-  const s = process.env.AUTH_SECRET
-  if (!s || s.length < MINIMO_SEGREDO) {
-    throw new Error(`AUTH_SECRET ausente ou com menos de ${MINIMO_SEGREDO} caracteres`)
-  }
-  return new TextEncoder().encode(s)
-}
+/**
+ * Hash de senha com scrypt do Node, sem dependência externa.
+ *
+ * Usa `node:crypto`, que NÃO existe no Edge Runtime — por isso este módulo é
+ * separado de `sessao.ts` e nunca pode ser importado pelo `middleware.ts`.
+ */
 
 /** Gera o valor de APP_PASSWORD_HASH. Formato: scrypt$<salHex>$<hashHex> */
 export async function hash(senha: string): Promise<string> {
@@ -44,23 +38,4 @@ export async function verificarSenha(senha: string): Promise<boolean> {
   // timingSafeEqual estoura com tamanhos diferentes; o tamanho não é segredo.
   if (derivada.length !== esperada.length) return false
   return timingSafeEqual(derivada, esperada)
-}
-
-export async function assinarSessao(): Promise<string> {
-  const chave = segredo()
-  return new SignJWT({ sub: 'dono' })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(`${DIAS_DE_SESSAO}d`)
-    .sign(chave)
-}
-
-export async function verificarSessao(token: string | undefined): Promise<boolean> {
-  if (!token) return false
-  try {
-    await jwtVerify(token, segredo())
-    return true
-  } catch {
-    return false
-  }
 }

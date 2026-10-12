@@ -64,6 +64,24 @@ Abra `http://localhost:3000/dia` e confira `sincronizado há 0h` mais as transa�
 Por último, [`atalhos.md`](atalhos.md) — e registre lá o resultado da validação do app Saúde,
 que é o único risco do projeto ainda não verificado.
 
+## Verificar a Fase 2 (depois do banco)
+
+Com `DATABASE_URL` e o primeiro sync feitos:
+
+```bash
+npx prisma db seed     # 12 categorias + 6 hábitos
+```
+
+Abra `/dinheiro` e confira:
+
+- **Pagamento de fatura aparece esmaecido** (`ignorada`). Se não aparecer, a descrição que o
+  Nubank usa é diferente da esperada — ajuste `PADROES_PAGA_FATURA` em
+  `src/features/dinheiro/transferencia.ts` e me diga qual é o texto real.
+- **Recategorizar um lançamento cria uma regra.** Confira em `npx prisma studio` →
+  `RegraCategoria`: deve haver uma linha com as duas primeiras palavras da descrição.
+- **Se a sobra mostrar `—`**, nenhuma receita foi detectada no mês. Isso é o comportamento
+  correto, não bug: o app não inventa número.
+
 ## Ambiente desta máquina
 
 - `/usr/bin/git` e `/usr/bin/python3` estão travados na licença do Xcode. Use

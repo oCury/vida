@@ -19,6 +19,7 @@ export const config = {
   // casa `/dinheiro` deixaria extrato bancário acessível sem login se não
   // casasse. O custo de ser explícito aqui é zero.
   matcher: [
+    '/',
     '/dia',
     '/dia/:path*',
     '/dinheiro',

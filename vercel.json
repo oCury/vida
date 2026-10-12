@@ -1,3 +1,12 @@
 {
-  "crons": [{ "path": "/api/cron/sync-pluggy", "schedule": "0 6 * * *" }]
+  "crons": [
+    {
+      "path": "/api/cron/sync-pluggy",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/lembrete",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }

@@ -7,6 +7,11 @@ if (!connectionString) throw new Error('DATABASE_URL ausente')
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 
+const METAS = [
+  { nome: 'Primeiros R$ 500', valorAlvo: 500, ordem: 1 },
+  { nome: 'R$ 1.500', valorAlvo: 1500, ordem: 2 },
+] as const
+
 const CATEGORIAS = [
   { nome: 'Mercado', grupo: 'VARIAVEL' },
   { nome: 'Delivery', grupo: 'VARIAVEL' },
@@ -40,6 +45,14 @@ const HABITOS = [
 ] as const
 
 async function main() {
+  for (const m of METAS) {
+    const existe = await prisma.meta.findFirst({ where: { nome: m.nome } })
+    if (!existe) {
+      await prisma.meta.create({ data: { nome: m.nome, valorAlvo: m.valorAlvo, ordem: m.ordem } })
+    }
+  }
+  console.log(`${METAS.length} degraus de reserva garantidos`)
+
   for (const c of CATEGORIAS) {
     await prisma.categoria.upsert({
       where: { nome: c.nome },

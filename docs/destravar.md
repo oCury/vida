@@ -82,6 +82,33 @@ Abra `/dinheiro` e confira:
 - **Se a sobra mostrar `—`**, nenhuma receita foi detectada no mês. Isso é o comportamento
   correto, não bug: o app não inventa número.
 
+## Ativar os lembretes (Fase 3)
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Cole no `.env` como `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY`, e preencha
+`VAPID_SUBJECT=mailto:seu@email`. Suba as três na Vercel também.
+
+**No iPhone, push só funciona depois de instalar o PWA** pela Tela de Início (iOS 16.4+).
+No Safari o botão "ativar lembretes" vai dizer isso em vez de falhar calado. Depois de
+instalar, abra o app, toque em **ativar lembretes** e aceite a permissão.
+
+Dois lembretes passam a existir: hábito pendente às 21h, e sincronização parada há mais de 48h —
+esse segundo era uma dívida da Fase 1, prometida no design e nunca implementada.
+
+## Marcar a conta de reserva
+
+A barra da reserva precisa de uma conta marcada. Crie uma Caixinha ou RDB no Nubank; depois do
+próximo sync ela aparece como conta, e então:
+
+```bash
+npx prisma studio   # Conta → marque ehReserva = true na conta da reserva
+```
+
+Enquanto nenhuma estiver marcada, a barra diz isso em vez de mostrar 0% de um alvo inventado.
+
 ## Ambiente desta máquina
 
 - `/usr/bin/git` e `/usr/bin/python3` estão travados na licença do Xcode. Use

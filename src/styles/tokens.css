@@ -1,0 +1,49 @@
+/*
+ * Direção: suíço editorial.
+ *
+ * Tipografia como estrutura, grid rígido, fundo claro e UM acento. Cor só
+ * carrega significado — acima/abaixo do orçamento, sync velho — nunca enfeite.
+ * Sem dark mode por decisão: o app é lido na rua, com sol.
+ */
+:root {
+  /* superfícies e texto */
+  --cor-fundo: oklch(98.5% 0.004 90);
+  --cor-superficie: oklch(100% 0 0);
+  --cor-texto: oklch(18% 0.01 260);
+  --cor-texto-fraco: oklch(52% 0.01 260);
+  --cor-linha: oklch(89% 0.005 260);
+
+  /* o único acento */
+  --cor-acento: oklch(52% 0.19 255);
+
+  /* semântica: usada só quando significa algo */
+  --cor-positivo: oklch(52% 0.14 155);
+  --cor-atencao: oklch(68% 0.16 70);
+  --cor-negativo: oklch(55% 0.19 25);
+
+  /* escala tipográfica — o contraste entre herói e secundário É a hierarquia */
+  --texto-heroi: clamp(3.5rem, 2rem + 12vw, 8rem);
+  --texto-titulo: clamp(1.25rem, 1.1rem + 0.6vw, 1.75rem);
+  --texto-base: clamp(0.95rem, 0.9rem + 0.25vw, 1.0625rem);
+  --texto-mini: 0.75rem;
+
+  --fonte-texto: ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  /* números tabulares: dígito que não dança quando o valor muda */
+  --fonte-numero: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ritmo: intencional, não padding uniforme */
+  --espaco-1: 0.25rem;
+  --espaco-2: 0.5rem;
+  --espaco-3: 1rem;
+  --espaco-4: 1.75rem;
+  --espaco-secao: clamp(2.5rem, 2rem + 3vw, 5rem);
+
+  --duracao: 180ms;
+  --saida: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duracao: 1ms;
+  }
+}

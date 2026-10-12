@@ -13,6 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  manifest: '/manifest.webmanifest',
+  appleWebApp: { capable: true, title: 'Vida', statusBarStyle: 'default' },
   title: "Vida",
   description: "Rastreador pessoal de dinheiro e hábitos.",
 };

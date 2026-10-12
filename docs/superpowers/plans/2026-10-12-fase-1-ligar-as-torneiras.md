@@ -1003,10 +1003,18 @@ describe('janelaDeBusca', () => {
     expect(desde.toISOString().slice(0, 10)).toBe('2025-10-12')
   })
 
-  it('no sync incremental volta 10 dias, com folga sobre a janela de 7 do Pluggy', () => {
+  it('no sync incremental volta até o último sync MAIS 10 dias de folga', () => {
     const agora = new Date('2026-10-12T06:00:00Z')
+    // último sync 1 dia atrás → 1 + 10 de folga = 11 dias
     const desde = janelaDeBusca(new Date('2026-10-11T06:00:00Z'), agora)
-    expect(desde.toISOString().slice(0, 10)).toBe('2026-10-02')
+    expect(desde.toISOString().slice(0, 10)).toBe('2026-10-01')
+  })
+
+  it('a folga cobre a janela de 7 dias do Pluggy com margem, mesmo no caso mais curto', () => {
+    const agora = new Date('2026-10-12T06:00:00Z')
+    const desde = janelaDeBusca(new Date('2026-10-12T05:00:00Z'), agora)
+    const diasCobertos = (agora.getTime() - desde.getTime()) / 86_400_000
+    expect(diasCobertos).toBeGreaterThan(7)
   })
 
   it('se o último sync é antigo, volta até ele e não só 10 dias', () => {

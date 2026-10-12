@@ -47,6 +47,35 @@ export function mapearTransacao(bruta: TransacaoBruta): TransacaoDominio {
   }
 }
 
+/** Formato bruto do item (a "conexão" com a instituição). */
+type ItemBruto = {
+  id: string
+  status: string
+  connector?: { name?: string } | null
+}
+
+export function mapearConexao(bruto: ItemBruto): ConexaoDominio {
+  return {
+    pluggyItemId: bruto.id,
+    instituicao: bruto.connector?.name ?? 'desconhecida',
+    status: bruto.status,
+  }
+}
+
+/** Lê os itemIds configurados. Ver comentário em `listarConexoes`. */
+export function lerItemIds(bruto: string | undefined): string[] {
+  const ids = (bruto ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+  if (ids.length === 0) {
+    throw new Error(
+      'PLUGGY_ITEM_IDS é obrigatório: o plano gratuito não permite listar itens pela API',
+    )
+  }
+  return ids
+}
+
 export function criarFontePluggy(): FonteFinanceira {
   const clientId = process.env.PLUGGY_CLIENT_ID
   const clientSecret = process.env.PLUGGY_CLIENT_SECRET
@@ -54,17 +83,21 @@ export function criarFontePluggy(): FonteFinanceira {
     throw new Error('PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET são obrigatórios')
   }
   const cliente = new PluggyClient({ clientId, clientSecret })
+  const itemIds = lerItemIds(process.env.PLUGGY_ITEM_IDS)
 
   return {
+    /**
+     * Lê cada item configurado individualmente.
+     *
+     * Não usa `fetchAllItems()` de propósito: listar itens é opt-in de plano
+     * pago e devolve `403 LIST_ITEMS_FEATURE_NOT_ENABLED` no plano pessoal
+     * gratuito — que é o plano deste projeto. O próprio SDK recomenda guardar
+     * o `itemId` e usar `fetchItem`. Os ids ficam em PLUGGY_ITEM_IDS e são
+     * copiados do painel do Meu Pluggy depois de conectar o banco.
+     */
     async listarConexoes() {
-      const itens = await cliente.fetchAllItems()
-      return itens.map(
-        (i): ConexaoDominio => ({
-          pluggyItemId: i.id,
-          instituicao: i.connector?.name ?? 'desconhecida',
-          status: i.status,
-        }),
-      )
+      const itens = await Promise.all(itemIds.map((id) => cliente.fetchItem(id)))
+      return itens.map(mapearConexao)
     },
 
     async listarContas(pluggyItemId) {

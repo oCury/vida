@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mapearConta, mapearTransacao } from './pluggy-client'
+import { lerItemIds, mapearConexao, mapearConta, mapearTransacao } from './pluggy-client'
 
 describe('mapearConta', () => {
   it('classifica conta corrente e preserva o saldo', () => {
@@ -77,5 +77,43 @@ describe('mapearTransacao', () => {
       category: null,
     })
     expect(tx.categoriaOrig).toBeNull()
+  })
+})
+
+describe('mapearConexao', () => {
+  it('lê o nome da instituição do connector', () => {
+    expect(mapearConexao({ id: 'item-1', status: 'UPDATED', connector: { name: 'Nubank' } })).toEqual(
+      { pluggyItemId: 'item-1', instituicao: 'Nubank', status: 'UPDATED' },
+    )
+  })
+
+  it('não quebra quando o connector não vem', () => {
+    expect(mapearConexao({ id: 'item-2', status: 'LOGIN_ERROR' }).instituicao).toBe('desconhecida')
+  })
+
+  it('preserva status de erro, que é o que dispara o alerta de reconectar', () => {
+    expect(mapearConexao({ id: 'item-3', status: 'LOGIN_ERROR' }).status).toBe('LOGIN_ERROR')
+  })
+})
+
+describe('lerItemIds', () => {
+  it('lê um único id', () => {
+    expect(lerItemIds('item-1')).toEqual(['item-1'])
+  })
+
+  it('lê vários ids separados por vírgula, ignorando espaços', () => {
+    expect(lerItemIds(' item-1 , item-2 ')).toEqual(['item-1', 'item-2'])
+  })
+
+  it('descarta entradas vazias de vírgula sobrando', () => {
+    expect(lerItemIds('item-1,,')).toEqual(['item-1'])
+  })
+
+  it('estoura quando não há id configurado, em vez de sincronizar nada em silêncio', () => {
+    expect(() => lerItemIds(undefined)).toThrow('PLUGGY_ITEM_IDS é obrigatório')
+  })
+
+  it('estoura quando a variável tem só espaços', () => {
+    expect(() => lerItemIds('   ')).toThrow('PLUGGY_ITEM_IDS é obrigatório')
   })
 })

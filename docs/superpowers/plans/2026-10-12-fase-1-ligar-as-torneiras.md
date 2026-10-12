@@ -921,17 +921,19 @@ export function criarFontePluggy(): FonteFinanceira {
     throw new Error('PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET são obrigatórios')
   }
   const cliente = new PluggyClient({ clientId, clientSecret })
+  const itemIds = lerItemIds(process.env.PLUGGY_ITEM_IDS)
 
   return {
+    /**
+     * Lê cada item configurado individualmente.
+     *
+     * Não usa `fetchAllItems()` de propósito: listar itens é opt-in de plano
+     * pago e devolve `403 LIST_ITEMS_FEATURE_NOT_ENABLED` no plano pessoal
+     * gratuito — que é o plano deste projeto.
+     */
     async listarConexoes() {
-      const itens = await cliente.fetchAllItems()
-      return itens.map(
-        (i): ConexaoDominio => ({
-          pluggyItemId: i.id,
-          instituicao: i.connector?.name ?? 'desconhecida',
-          status: i.status,
-        }),
-      )
+      const itens = await Promise.all(itemIds.map((id) => cliente.fetchItem(id)))
+      return itens.map(mapearConexao)
     },
 
     async listarContas(pluggyItemId) {
@@ -1948,12 +1950,14 @@ npx vercel env add AUTH_SECRET production
 npx vercel env add APP_PASSWORD_HASH production
 npx vercel env add INGEST_TOKEN production
 npx vercel env add CRON_SECRET production
+npx vercel env add PLUGGY_ITEM_IDS production
 ```
 
 - [ ] **Passo 2: Conectar o Nubank no Meu Pluggy**
 
 Acesse `https://meu.pluggy.ai`, conecte a conta Nubank (conta e cartão vêm no mesmo vínculo) e
-confirme que o item aparece com status `UPDATED`.
+confirme que o item aparece com status `UPDATED`. **Copie o `itemId` do painel** e coloque
+em `PLUGGY_ITEM_IDS` — sem ele o adapter estoura, porque listar itens é recurso pago.
 
 - [ ] **Passo 3: Publicar**
 

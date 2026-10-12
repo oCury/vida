@@ -51,10 +51,22 @@ primeiro dinheiro guardado.
 | Decisão | Escolha | Motivo |
 |---|---|---|
 | App | **PWA** (Next.js), não Expo/React Native | iPhone. Um codebase serve web e mobile; push funciona (iOS 16.4+); dispensa Apple Developer (US$ 99/ano) e re-assinatura de build a cada 7 dias. O que o nativo adicionaria (widget, HealthKit) o app Atalhos cobre a custo zero. |
-| Open Finance | **Meu Pluggy** (plano pessoal) | Gratuito por tempo indeterminado para pessoa física. Traz saldo, extrato, cartão e investimentos via `client_id`/`client_secret`. Limites: 5 conexões ativas, sync a cada 24h. O usuário precisa de 1 (Nubank: conta + cartão no mesmo vínculo). **Custo: R$ 0/mês.** |
+| Open Finance | **Meu Pluggy** (plano pessoal, `PLUGGY_ITEM_IDS` por item) | Gratuito por tempo indeterminado para pessoa física. Traz saldo, extrato, cartão e investimentos via `client_id`/`client_secret`. Limites: 5 conexões ativas, sync a cada 24h. O usuário precisa de 1 (Nubank: conta + cartão no mesmo vínculo). **Custo: R$ 0/mês.** |
 | Stack | Next.js 15 (App Router) + TypeScript + Prisma + Postgres | Mesma stack do AgendaHora. Zero custo de aprendizado num projeto cujo risco principal é abandono. |
 | Hospedagem | Vercel + Neon, isolado | Não compartilha VPS Magalu com o AgendaHora (sistema de saúde em produção). Pode ocupar o Vercel+Neon que já existe ocioso. |
 | Saúde (sono/passos/peso) | Automação do app **Atalhos** → POST | Lê amostras do app Saúde e envia à API às 23h, sem interação. **A validar no aparelho na Fase 1** — a ação existe, mas não está provada neste iPhone. |
+
+### ⚠️ Listar conexões é recurso de plano pago
+
+`fetchAllItems()` do SDK é **opt-in de plano pago** e devolve
+`403 LIST_ITEMS_FEATURE_NOT_ENABLED` no plano pessoal gratuito — verificado no
+`.d.ts` do `pluggy-sdk` instalado. O plano gratuito segue válido para ler saldo,
+extrato, cartão e investimentos; o que não existe é **enumerar** os itens.
+
+Por isso `listarConexoes()` não lista: ela lê cada `itemId` com `fetchItem(id)`.
+Os ids ficam em `PLUGGY_ITEM_IDS` (separados por vírgula, até 5) e são copiados
+do painel do Meu Pluggy depois de conectar o banco. Sem a variável, o adapter
+estoura na criação — em vez de sincronizar nada em silêncio.
 
 ### Consequência comercial a registrar
 

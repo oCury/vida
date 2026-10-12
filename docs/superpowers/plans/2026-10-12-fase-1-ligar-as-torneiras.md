@@ -231,13 +231,31 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // No Prisma 7 a URL NÃO vive mais aqui. Ela fica em prisma.config.ts (para
+  // migrate/introspect) e chega ao client por driver adapter. Deixar `url` aqui
+  // faz o `prisma validate` falhar com P1012.
 }
 
-enum TipoConta      { CORRENTE CREDITO }
-enum GrupoCategoria { FIXA VARIAVEL RECEITA }
-enum TipoHabito     { BOOL NUMERO }
-enum FonteHabito    { MANUAL SAUDE }
+enum TipoConta {
+  CORRENTE
+  CREDITO
+}
+
+enum GrupoCategoria {
+  FIXA
+  VARIAVEL
+  RECEITA
+}
+
+enum TipoHabito {
+  BOOL
+  NUMERO
+}
+
+enum FonteHabito {
+  MANUAL
+  SAUDE
+}
 
 model Conexao {
   id           String    @id @default(cuid())
@@ -349,14 +367,58 @@ model SyncLog {
 Crie `src/lib/prisma.ts`:
 
 ```ts
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
+
+/**
+ * Cliente único.
+ *
+ * No Prisma 7 a conexão chega por driver adapter, não pela `url` do schema.
+ * Em desenvolvimento o cliente é guardado no escopo global porque o hot reload
+ * do Next recria o módulo a cada edição, e sem isso cada recarga abriria um
+ * novo pool até esgotar as conexões do Postgres.
+ */
+function criar(): PrismaClient {
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) throw new Error('DATABASE_URL ausente')
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
+}
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+export const prisma = globalForPrisma.prisma ?? criar()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 ```
+
+E crie `prisma.config.ts` na raiz — obrigatório no Prisma 7, e ele **não** carrega o `.env`
+sozinho, daí o `dotenv/config`:
+
+```ts
+import 'dotenv/config' // o Prisma 7 não carrega .env sozinho no config
+
+import { defineConfig, env } from 'prisma/config'
+
+export default defineConfig({
+  schema: 'prisma/schema.prisma',
+  datasource: {
+    url: env('DATABASE_URL'),
+  },
+  migrations: {
+    path: 'prisma/migrations',
+  },
+})
+```
+
+Instale as dependências que esse padrão exige:
+
+```bash
+npm install @prisma/adapter-pg pg dotenv
+```
+
+⚠️ Sem `DATABASE_URL` definida, **nem `prisma generate` roda** — o carregamento do config
+falha antes. Se precisar gerar o client antes de ter o banco, ponha um valor placeholder
+na variável; `generate` não abre conexão.
 
 - [ ] **Passo 3: Provisionar o Postgres e migrar**
 

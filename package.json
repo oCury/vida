@@ -11,9 +11,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "dotenv": "^18.0.7",
     "jose": "^6.2.12",
     "next": "15.5.27",
+    "pg": "^8.23.1",
     "pluggy-sdk": "^0.92.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"

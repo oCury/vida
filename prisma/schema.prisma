@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // No Prisma 7 a URL não vive mais aqui: ela está em prisma.config.ts
+  // (para migrate/introspect) e chega ao client via driver adapter.
+}
+
+enum TipoConta {
+  CORRENTE
+  CREDITO
+}
+
+enum GrupoCategoria {
+  FIXA
+  VARIAVEL
+  RECEITA
+}
+
+enum TipoHabito {
+  BOOL
+  NUMERO
+}
+
+enum FonteHabito {
+  MANUAL
+  SAUDE
+}
+
+model Conexao {
+  id           String    @id @default(cuid())
+  pluggyItemId String    @unique
+  instituicao  String
+  status       String // UPDATED | LOGIN_ERROR | WAITING_USER_INPUT | OUTDATED
+  ultimoSyncEm DateTime?
+  contas       Conta[]
+}
+
+model Conta {
+  id              String      @id @default(cuid())
+  pluggyAccountId String      @unique
+  conexaoId       String
+  conexao         Conexao     @relation(fields: [conexaoId], references: [id])
+  nome            String
+  tipo            TipoConta
+  saldo           Decimal?    @db.Decimal(14, 2) // null = desconhecido, nunca 0
+  limite          Decimal?    @db.Decimal(14, 2)
+  transacoes      Transacao[]
+}
+
+model Transacao {
+  id            String     @id @default(cuid())
+  pluggyTxId    String     @unique // idempotência do sync
+  contaId       String
+  conta         Conta      @relation(fields: [contaId], references: [id])
+  data          DateTime
+  descricao     String
+  valor         Decimal    @db.Decimal(14, 2)
+  categoriaOrig String?
+  categoriaId   String?
+  categoria     Categoria? @relation(fields: [categoriaId], references: [id])
+  ignorada      Boolean    @default(false) // transferência entre contas próprias
+
+  @@index([data])
+}
+
+model Categoria {
+  id         String           @id @default(cuid())
+  nome       String           @unique
+  grupo      GrupoCategoria
+  transacoes Transacao[]
+  regras     RegraCategoria[]
+  orcamentos Orcamento[]
+}
+
+model RegraCategoria {
+  id          String    @id @default(cuid())
+  padrao      String // trecho buscado na descrição, maiúsculas
+  categoriaId String
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+}
+
+model Orcamento {
+  id          String    @id @default(cuid())
+  categoriaId String
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+  mes         String // YYYY-MM
+  valorAlvo   Decimal   @db.Decimal(14, 2)
+
+  @@unique([categoriaId, mes])
+}
+
+model Meta {
+  id        String  @id @default(cuid())
+  nome      String
+  valorAlvo Decimal @db.Decimal(14, 2)
+  ordem     Int
+}
+
+model HabitoDef {
+  id        String           @id @default(cuid())
+  slug      String           @unique
+  nome      String
+  tipo      TipoHabito
+  unidade   String?
+  chips     Int[]            @default([])
+  fonte     FonteHabito      @default(MANUAL)
+  ativo     Boolean          @default(true) // arquiva sem apagar histórico
+  ordem     Int              @default(0)
+  registros RegistroHabito[]
+}
+
+model RegistroHabito {
+  id        String    @id @default(cuid())
+  habitoId  String
+  habito    HabitoDef @relation(fields: [habitoId], references: [id])
+  data      DateTime // meia-noite de Brasília daquele dia
+  valorBool Boolean?
+  valorNum  Decimal?  @db.Decimal(10, 2)
+  criadoEm  DateTime  @default(now())
+
+  @@unique([habitoId, data]) // idempotência do Atalhos
+  @@index([data])
+}
+
+model SyncLog {
+  id          String   @id @default(cuid())
+  executadoEm DateTime @default(now())
+  status      String // OK | ERRO
+  erro        String?
+  novas       Int      @default(0)
+}
